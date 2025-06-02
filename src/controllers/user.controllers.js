@@ -221,21 +221,39 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     avatar = await cloudinaryUpload(avatarLocalPath);
   } catch (error) {
     logger.error("Avatar Upload Error :", error);
-    throw new ApiError(500, "Failed to upload avatar");
+    throw new ApiError(500, "Failed to upload Avatar");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user._id,
     { $set: { avatar: avatar.url } },
     { new: true }
-  );
+  ).select("-password -refreshToken");
 
   return res
     .status(200)
     .json(new ApiResponse(200, user, "Avatar Updated Successfully"));
 });
 
-const updateUserCoverImage = asyncHandler(async (req, res) => {});
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverLocalPath = req.file?.path;
+
+  let coverImage = "";
+  try {
+    coverImage = await cloudinaryUpload(coverLocalPath);
+  } catch (error) {
+    logger.error("Cover Image upload Error :", error);
+    throw new ApiError(500, "Failed to upload Cover Image");
+  }
+
+  const user = await User.findByIdAndUpdate(req.user._id,
+    { $set: { coverImage: coverImage.url } },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res.status(200)
+    .json(new ApiResponse(200, user, "Cover Image updated Successfully"));
+});
 
 const updateUserPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
