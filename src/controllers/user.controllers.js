@@ -271,6 +271,65 @@ const updateUserPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password updated succesfully"));
 });
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username) throw new ApiError(400, "Username is required");
+
+  const channels = await User.aggregate([
+    {
+      $match: {
+        username: username?.toLowerCase()
+      }
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foriegnField: "channel",
+        as: "Subscribers"
+      }
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foriegnField: "subscriber",
+        as: "Subscriptions"
+      }
+    },
+    {
+      addFields: {
+        subscriberCount: {
+          $size: "$Subscribers"
+        },
+        subscribedToCount: {
+          $size: "$Subscriptions"
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$Subscribers.subscriber"] },
+            then: true,
+            else: false
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        username: 1,
+        fullName: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscriberCount: 1,
+        subscribedToCount: 1,
+        isSubscribed: 1
+      }
+    }
+  ]);
+
+  console.log(channels);
+});
+
 export {
   userRegister,
   userLogin,
@@ -281,4 +340,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   updateUserPassword,
+  getUserChannelProfile,
 };

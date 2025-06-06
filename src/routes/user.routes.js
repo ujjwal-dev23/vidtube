@@ -8,6 +8,7 @@ import {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile
 } from "../controllers/user.controllers.js";
 import { Router } from "express";
 import upload from "../middlewares/multer.middlewares.js";
@@ -31,6 +32,7 @@ router.route("/register").post(
 
 router.route("/login").post(userLogin);
 router.route("/refreshtoken").post(refreshAccessToken);
+router.route("/profile/:username").get(getUserChannelProfile);
 
 // Secured Routes
 router.route("/logout").post(authMiddleware, userLogout);
