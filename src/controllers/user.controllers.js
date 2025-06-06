@@ -285,7 +285,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
-        foriegnField: "channel",
+        foreignField: "channel",
         as: "Subscribers"
       }
     },
@@ -293,12 +293,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
-        foriegnField: "subscriber",
+        foreignField: "subscriber",
         as: "Subscriptions"
       }
     },
     {
-      addFields: {
+      $addFields: {
         subscriberCount: {
           $size: "$Subscribers"
         },
@@ -327,7 +327,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     }
   ]);
 
-  console.log(channels);
+  if (!channels?.length) throw new ApiError(404, "Channel not Found");
+
+  return res.status(200).json(new ApiResponse(200, channels[0], "Channel Profile Fetched Successfully"));
+
 });
 
 export {
