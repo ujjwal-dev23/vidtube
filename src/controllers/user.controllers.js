@@ -246,12 +246,14 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to upload Cover Image");
   }
 
-  const user = await User.findByIdAndUpdate(req.user._id,
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
     { $set: { coverImage: coverImage.url } },
     { new: true }
   ).select("-password -refreshToken");
 
-  return res.status(200)
+  return res
+    .status(200)
     .json(new ApiResponse(200, user, "Cover Image updated Successfully"));
 });
 
@@ -278,41 +280,41 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   const channels = await User.aggregate([
     {
       $match: {
-        username: username?.toLowerCase()
-      }
+        username: username?.toLowerCase(),
+      },
     },
     {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
         foreignField: "channel",
-        as: "Subscribers"
-      }
+        as: "Subscribers",
+      },
     },
     {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
         foreignField: "subscriber",
-        as: "Subscriptions"
-      }
+        as: "Subscriptions",
+      },
     },
     {
       $addFields: {
         subscriberCount: {
-          $size: "$Subscribers"
+          $size: "$Subscribers",
         },
         subscribedToCount: {
-          $size: "$Subscriptions"
+          $size: "$Subscriptions",
         },
         isSubscribed: {
           $cond: {
             if: { $in: [req.user?._id, "$Subscribers.subscriber"] },
             then: true,
-            else: false
-          }
-        }
-      }
+            else: false,
+          },
+        },
+      },
     },
     {
       $project: {
@@ -322,15 +324,18 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         coverImage: 1,
         subscriberCount: 1,
         subscribedToCount: 1,
-        isSubscribed: 1
-      }
-    }
+        isSubscribed: 1,
+      },
+    },
   ]);
 
   if (!channels?.length) throw new ApiError(404, "Channel not Found");
 
-  return res.status(200).json(new ApiResponse(200, channels[0], "Channel Profile Fetched Successfully"));
-
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channels[0], "Channel Profile Fetched Successfully")
+    );
 });
 
 export {

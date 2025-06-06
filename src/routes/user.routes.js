@@ -8,7 +8,7 @@ import {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getUserChannelProfile
+  getUserChannelProfile,
 } from "../controllers/user.controllers.js";
 import { Router } from "express";
 import upload from "../middlewares/multer.middlewares.js";
@@ -43,6 +43,8 @@ router.route("/update/details").put(authMiddleware, updateAccountDetails);
 router
   .route("/update/avatar")
   .put(authMiddleware, upload.single("avatar"), updateUserAvatar);
-router.route("/update/coverImage").put(authMiddleware, upload.single("coverImage"), updateUserCoverImage);
+router
+  .route("/update/coverImage")
+  .put(authMiddleware, upload.single("coverImage"), updateUserCoverImage);
 
 export default router;
