@@ -6,6 +6,7 @@ import { cloudinaryUpload, cloudinaryDelete } from "../utils/cloudinary.js";
 import logger from "../utils/logger.js";
 import jwt from "jsonwebtoken";
 import { cookieOptions } from "../constants.js";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -338,6 +339,63 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const userId = new mongoose.Types.ObjectId(req.user?._id);
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: userId,
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  if (!user.length) throw new ApiError(404, "User not Found");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0]?.watchHistory,
+        "Watch History fetched successfully"
+      )
+    );
+});
+
 export {
   userRegister,
   userLogin,
@@ -349,4 +407,5 @@ export {
   updateUserCoverImage,
   updateUserPassword,
   getUserChannelProfile,
+  getWatchHistory,
 };
