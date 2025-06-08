@@ -9,9 +9,11 @@ import {
 
 const router = Router();
 
-router.route("/post").post(authMiddleware, createTweet);
-router.route("/:username").get(authMiddleware, getUserTweets);
-router.route("/edit").patch(authMiddleware, updateTweet);
-router.route("/delete/:id").delete(authMiddleware, deleteTweet);
+router.use(authMiddleware);
+
+router.route("/post").post(createTweet);
+router.route("/:username").get(getUserTweets);
+router.route("/edit").patch(updateTweet);
+router.route("/delete/:id").delete(deleteTweet);
 
 export default router;
