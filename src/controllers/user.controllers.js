@@ -26,6 +26,7 @@ const generateAccessAndRefreshToken = async (userId) => {
   }
 };
 
+// Add upload validation
 const userRegister = asyncHandler(async (req, res) => {
   const { fullName, email, username, password } = req.body;
 
