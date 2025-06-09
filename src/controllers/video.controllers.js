@@ -4,6 +4,10 @@ import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
 
+const getPublicId = (url) => {
+  return url.split('/').pop().split('.')[0];
+};
+
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
     page = 1,
@@ -155,6 +159,10 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: delete video
+  if (!videoId) throw new ApiError(404, "Video Id is required");
+
+  const videoToDelete = await Video.findById(videoId);
+
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
