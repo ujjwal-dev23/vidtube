@@ -2,7 +2,7 @@ import { Video } from "../models/video.models.js";
 import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { cloudinaryUpload } from "../utils/cloudinary.js";
+import { cloudinaryDelete, cloudinaryUpload } from "../utils/cloudinary.js";
 
 const getPublicId = (url) => {
   return url.split("/").pop().split(".")[0];
@@ -181,7 +181,38 @@ const deleteVideo = asyncHandler(async (req, res) => {
   //TODO: delete video
   if (!videoId) throw new ApiError(404, "Video Id is required");
 
-  const videoToDelete = await Video.findById(videoId);
+  const videoToDelete = await Video.findOne({
+    _id: videoId,
+    owner: req.user?._id,
+  });
+
+  if (!videoToDelete)
+    throw new ApiError(404, "Video not found or missing permissions");
+
+  try {
+    const videoPublicId = getPublicId(videoToDelete?.videoFile);
+    await cloudinaryDelete(videoPublicId, "video");
+
+    if (videoToDelete.thumbnail) {
+      const thumbnailPublicId = getPublicId(videoToDelete.thumbnail);
+      await cloudinaryDelete(thumbnailPublicId);
+    }
+  } catch (error) {
+    logger.error(
+      "Error while deleting Video or Thumbnail from Cloudinary :",
+      error
+    );
+    throw new ApiError(
+      500,
+      "Something went wrong while deleting Video or Thumbnail"
+    );
+  }
+
+  await Video.findByIdAndDelete(videoId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video Deleted Successfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {

@@ -33,7 +33,8 @@ router
 router
   .route("/:videoId")
   .get(getVideoById)
-  .patch(authMiddleware, upload.single("thumbnail"), updateVideo);
+  .patch(authMiddleware, upload.single("thumbnail"), updateVideo)
+  .delete(authMiddleware, deleteVideo);
 router
   .route("/toggle/publish/:videoId")
   .patch(authMiddleware, togglePublishStatus);
