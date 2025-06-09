@@ -40,17 +40,16 @@ const getUserTweets = asyncHandler(async (req, res) => {
 });
 
 const updateTweet = asyncHandler(async (req, res) => {
-  const { _id: tweetId, content: newContent } = req.body;
+  const { tweetId } = req.params;
+  const { content: newContent } = req.body;
   if (!tweetId || !newContent)
     throw new ApiError(400, "Id and Content are required");
 
-  const tweet = await Tweet.findById(tweetId);
-  if (!tweet) throw new ApiError(404, "Tweet not found");
-  if (!tweet.owner.equals(req.user?._id))
-    throw new ApiError(401, "You can only edit your own tweets");
-
-  const updatedTweet = await Tweet.findByIdAndUpdate(
-    tweetId,
+  const updatedTweet = await Tweet.findOneAndUpdate(
+    {
+      _id: tweetId,
+      owner: req.user?._id,
+    },
     {
       $set: {
         content: newContent,
@@ -65,7 +64,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 });
 
 const deleteTweet = asyncHandler(async (req, res) => {
-  const { id: tweetId } = req.params;
+  const { tweetId } = req.params;
   if (!tweetId) throw new ApiError(400, "Tweet ID required");
 
   const tweet = await Tweet.findOneAndDelete({
