@@ -3,6 +3,7 @@ import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { cloudinaryDelete, cloudinaryUpload } from "../utils/cloudinary.js";
+import logger from "../utils/logger.js";
 
 const getPublicId = (url) => {
   return url.split("/").pop().split(".")[0];
@@ -125,16 +126,12 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video fetched successfully"));
 });
 
-// Implement old thumbnail deleting
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const {
-    title: newTitle,
-    description: newDescription,
-    thumbnail: newThumbnail,
-  } = req.body;
+  const { title: newTitle, description: newDescription } = req.body;
 
-  if (!newTitle && !newDescription && !newThumbnail)
+  const hasNewThumbnail = req.file && req.file.path;
+  if (!newTitle && !newDescription && !hasNewThumbnail)
     throw new ApiError(
       400,
       "Atleast one field is required (title, description, thumbnail)"
@@ -143,11 +140,22 @@ const updateVideo = asyncHandler(async (req, res) => {
   const updateObject = {};
   if (newTitle) updateObject.title = newTitle;
   if (newDescription) updateObject.description = newDescription;
-  if (newThumbnail) {
+
+  let oldThumbnailUrl = "";
+
+  if (hasNewThumbnail) {
+    const videoBeforeUpdate = await Video.findOne({
+      _id: videoId,
+      owner: req.user?._id,
+    });
+    if (!videoBeforeUpdate) throw new ApiError(404, "Video not found");
+
+    oldThumbnailUrl = videoBeforeUpdate.thumbnail;
     const newThumbnailLocalPath = req.file?.path;
     let thumbnailObj = "";
     try {
       thumbnailObj = await cloudinaryUpload(newThumbnailLocalPath);
+      updateObject.thumbnail = thumbnailObj.url;
     } catch (error) {
       logger.error("Error while uploading updated Thumbnail :", error);
       throw new ApiError(
@@ -155,8 +163,6 @@ const updateVideo = asyncHandler(async (req, res) => {
         "Something went wrong while updating the thumbnail"
       );
     }
-
-    updateObject.thumbnail = thumbnailObj.url;
   }
 
   const updatedVideo = await Video.findOneAndUpdate(
@@ -171,6 +177,16 @@ const updateVideo = asyncHandler(async (req, res) => {
   if (!updatedVideo)
     throw new ApiError(404, "Video not found or missing permissions");
 
+  if (hasNewThumbnail && oldThumbnailUrl) {
+    try {
+      const oldThumbnailPublicId = getPublicId(oldThumbnailUrl);
+      await cloudinaryDelete(oldThumbnailPublicId);
+      logger.info(`Old Thumbnail Deleted: ${oldThumbnailPublicId}`);
+    } catch (error) {
+      logger.error("Error deleting old thumbnail :", error);
+    }
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
@@ -178,7 +194,6 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: delete video
   if (!videoId) throw new ApiError(404, "Video Id is required");
 
   const videoToDelete = await Video.findOne({
