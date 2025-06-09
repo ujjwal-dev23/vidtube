@@ -11,11 +11,10 @@ import authMiddleware from "../middlewares/auth.middlewares.js";
 import upload from "../middlewares/multer.middlewares.js";
 
 const router = Router();
-router.use(authMiddleware);
 
 router
   .route("/")
-  .post(
+  .post(authMiddleware,
     upload.fields([
       {
         name: "videoFile",
@@ -29,5 +28,8 @@ router
     publishAVideo
   )
   .get(getAllVideos);
+
+router.route("/:videoId").get(getVideoById).patch(authMiddleware, upload.single("thumbnail"), updateVideo);
+router.route("/toggle/publish/:videoId").patch(authMiddleware, togglePublishStatus);
 
 export default router;
