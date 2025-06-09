@@ -14,7 +14,8 @@ const router = Router();
 
 router
   .route("/")
-  .post(authMiddleware,
+  .post(
+    authMiddleware,
     upload.fields([
       {
         name: "videoFile",
@@ -29,7 +30,12 @@ router
   )
   .get(getAllVideos);
 
-router.route("/:videoId").get(getVideoById).patch(authMiddleware, upload.single("thumbnail"), updateVideo);
-router.route("/toggle/publish/:videoId").patch(authMiddleware, togglePublishStatus);
+router
+  .route("/:videoId")
+  .get(getVideoById)
+  .patch(authMiddleware, upload.single("thumbnail"), updateVideo);
+router
+  .route("/toggle/publish/:videoId")
+  .patch(authMiddleware, togglePublishStatus);
 
 export default router;
