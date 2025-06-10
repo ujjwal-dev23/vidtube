@@ -30,7 +30,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
-  if (!commentId) throw new ApiError(400, "Video Id required");
+  if (!commentId) throw new ApiError(400, "Comment Id required");
 
   const deletedLike = await Like.findOneAndDelete({
     comment: commentId,
@@ -55,7 +55,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
   const { tweetId } = req.params;
-  if (!tweetId) throw new ApiError(400, "Video Id required");
+  if (!tweetId) throw new ApiError(400, "Tweet Id required");
 
   const deletedLike = await Like.findOneAndDelete({
     tweet: tweetId,
@@ -89,7 +89,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     .populate("video")
     .sort({ createdAt: -1 });
 
-  if (!likedVideos) throw new ApiError(404, "No liked videos found");
+  if (!likedVideos.length) throw new ApiError(404, "No liked videos found");
 
   return res
     .status(200)
