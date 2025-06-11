@@ -44,6 +44,7 @@ import commentRoute from "./routes/comment.routes.js";
 import videoRoute from "./routes/video.routes.js";
 import likeRoute from "./routes/like.routes.js";
 import subscriptionRoute from "./routes/subscription.routes.js";
+import playlistRoute from "./routes/playlist.routes.js";
 
 // Route setup
 app.use("/api/v1/health", healthCheckRoute);
@@ -53,5 +54,6 @@ app.use("/api/v1/comments", commentRoute);
 app.use("/api/v1/videos", videoRoute);
 app.use("/api/v1/likes", likeRoute);
 app.use("/api/v1/subscriptions", subscriptionRoute);
+app.use("/api/v1/playlists", playlistRoute);
 
 export { app };
